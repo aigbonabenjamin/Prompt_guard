@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "PromptGuard",
+  "version": "1.0.0",
+  "description": "Monitor and protect personal information when using AI chatbots while optimizing your prompts",
+  "author": "Your Name",
+  
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "tabs",
+    "windows",
+    "notifications"
+  ],
+  
+  "host_permissions": [
+    "https://chat.openai.com/*",
+    "https://claude.ai/*",
+    "https://bard.google.com/*",
+    "https://www.bing.com/chat*"
+  ],
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "PromptGuard"
+  },
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+
+
+  "web_accessible_resources": [
+    {
+      "resources": ["popup.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

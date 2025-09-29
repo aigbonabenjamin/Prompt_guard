@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PromptGuard Settings</title>
+    <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="shield-icon">🛡️</span>
+                    <h1>PromptGuard Settings</h1>
+                </div>
+                <button class="close-btn" id="closeBtn">×</button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="settings-grid">
+                <!-- General Settings -->
+                <section class="settings-section">
+                    <h2>General</h2>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <label for="enableProtection">Enable Protection</label>
+                            <p>Activate PromptGuard monitoring and alerts</p>
+                        </div>
+                        <div class="setting-control">
+                            <div class="toggle-switch" id="enableProtection">
+                                <input type="checkbox" id="enableProtectionInput" checked>
+                                <label for="enableProtectionInput"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <label for="notifications">Browser Notifications</label>
+                            <p>Show desktop notifications when personal information is detected</p>
+                        </div>
+                        <div class="setting-control">
+                            <div class="toggle-switch" id="notifications">
+                                <input type="checkbox" id="notificationsInput" checked>
+                                <label for="notificationsInput"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <label for="autoOptimize">Auto-Optimize Prompts</label>
+                            <p>Automatically replace detected personal information with placeholders</p>
+                        </div>
+                        <div class="setting-control">
+                            <div class="toggle-switch" id="autoOptimize">
+                                <input type="checkbox" id="autoOptimizeInput">
+                                <label for="autoOptimizeInput"></label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Detection Settings -->
+                <section class="settings-section">
+                    <h2>Detection Settings</h2>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <label for="sensitivity">Detection Sensitivity</label>
+                            <p>Adjust how strictly personal information is detected</p>
+                        </div>
+                        <div class="setting-control">
+                            <select id="sensitivity" class="select-input">
+                                <option value="low">Low - Only obvious patterns</option>
+                                <option value="medium" selected>Medium - Balanced detection</option>
+                                <option value="high">High - Aggressive detection</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <label>Information Types to Detect</label>
+                            <p>Choose which types of personal information to monitor</p>
+                        </div>
+                        <div class="setting-control">
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="detectEmail" checked>
+                                    <span class="checkmark"></span>
+                                    Email Addresses
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="detectPhone" checked>
+                                    <span class="checkmark"></span>
+                                    Phone Numbers
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="detectAddress" checked>
+                                    <span class="checkmark"></span>
+                                    Physical Addresses
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="detectSSN" checked>
+                                    <span class="checkmark"></span>
+                                    Social Security Numbers
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="detectCreditCard" checked>
+                                    <span class="checkmark"></span>
+                                    Credit Card Numbers
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Privacy Settings -->
+                <section class="settings-section">
+                    <h2>Privacy & Data</h2>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <label>Data Storage</label>
+                            <p>All data is stored locally in your browser. PromptGuard never sends your data to external servers.</p>
+                        </div>
+                        <div class="setting-control">
+                            <div class="info-badge">🔒 Local Only</div>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <label>Export Data</label>
+                            <p>Download your PromptGuard settings and statistics</p>
+                        </div>
+                        <div class="setting-control">
+                            <button class="btn btn-secondary" id="exportBtn">Export Data</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <label>Clear All Data</label>
+                            <p>Reset PromptGuard to default settings and clear all alerts</p>
+                        </div>
+                        <div class="setting-control">
+                            <button class="btn btn-danger" id="clearDataBtn">Clear Data</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Statistics -->
+                <section class="settings-section">
+                    <h2>Statistics</h2>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalScans">--</div>
+                            <div class="stat-label">Total Scans</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalAlerts">--</div>
+                            <div class="stat-label">Privacy Alerts</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="privacyScore">--</div>
+                            <div class="stat-label">Privacy Score</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="optimizedPrompts">--</div>
+                            <div class="stat-label">Optimized Prompts</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="version">PromptGuard v1.0.0</div>
+                <div class="actions">
+                    <button class="btn btn-primary" id="saveBtn">Save Settings</button>
+                    <button class="btn btn-secondary" id="resetBtn">Reset to Defaults</button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <div class="notification" id="notification"></div>
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <h3>Confirm Action</h3>
+            <p id="confirmMessage"></p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                <button class="btn btn-danger" id="confirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="settings.js"></script>
+</body>
+</html>

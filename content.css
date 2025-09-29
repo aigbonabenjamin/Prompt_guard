@@ -1,0 +1,109 @@
+/* Floating icon styles for content script */
+.promptguard-floating-icon {
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    width: 60px !important;
+    height: 60px !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
+    z-index: 2147483647 !important;
+    transition: all 0.3s ease !important;
+    border: 3px solid white !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+.promptguard-floating-icon:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.promptguard-floating-icon .icon {
+    font-size: 24px;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.promptguard-floating-icon.has-alerts {
+    animation: pulseAlert 2s infinite;
+}
+
+.promptguard-floating-icon.has-alerts::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 16px;
+    height: 16px;
+    background: #dc3545;
+    border-radius: 50%;
+    border: 2px solid white;
+    animation: bounce 1s infinite;
+}
+
+.promptguard-floating-icon.disabled {
+    background: #6c757d;
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+}
+
+.promptguard-floating-icon.disabled:hover {
+    box-shadow: 0 6px 20px rgba(108, 117, 125, 0.6);
+}
+
+@keyframes pulseAlert {
+    0%, 100% { box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+    50% { box-shadow: 0 4px 12px rgba(220, 53, 69, 0.6); }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+/* Input field highlighting */
+.promptguard-highlight-danger {
+    border: 2px solid #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.promptguard-highlight-warning {
+    border: 2px solid #ffc107 !important;
+    box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25) !important;
+}
+
+/* Tooltip for detected information */
+.promptguard-tooltip {
+    position: absolute;
+    background: #dc3545;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    z-index: 10001;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+}
+
+.promptguard-tooltip.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.promptguard-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #dc3545 transparent transparent transparent;
+}
