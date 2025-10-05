@@ -1,9 +1,6 @@
-console.log('PromptGuard Content Script Loaded!');
-
 // Content script for PromptGuard
 class PromptGuardContent {
     constructor() {
-        console.log('PromptGuard Content Constructor called');
         this.isActive = true;
         this.floatingIcon = null;
         this.detectionPatterns = {
@@ -17,19 +14,17 @@ class PromptGuardContent {
     }
 
     init() {
-        console.log('PromptGuard: Initializing content script');
         this.createFloatingIcon();
+        this.createMiniPopup();
         this.setupMessageListener();
         this.startMonitoring();
     }
 
     createFloatingIcon() {
-        console.log('PromptGuard: Creating floating icon');
         // Remove existing icon if present
         const existing = document.querySelector('.promptguard-floating-icon');
         if (existing) {
             existing.remove();
-            console.log('PromptGuard: Removed existing icon');
         }
 
         // Create floating icon
@@ -37,27 +32,235 @@ class PromptGuardContent {
         this.floatingIcon.className = 'promptguard-floating-icon';
         this.floatingIcon.innerHTML = '<div class="icon">🛡️</div>';
         this.floatingIcon.title = 'PromptGuard - Click to open';
-        console.log('PromptGuard: Icon element created');
 
         // Add click event
         this.floatingIcon.addEventListener('click', () => {
-            console.log('PromptGuard: Floating icon clicked');
-            this.openPopup();
+            this.toggleMiniPopup();
         });
 
-        if (document.body) {
-            document.body.appendChild(this.floatingIcon);
-            console.log('PromptGuard: Floating icon appended to body');
-            console.log('PromptGuard: Icon element:', this.floatingIcon);
-            console.log('PromptGuard: Icon styles:', getComputedStyle(this.floatingIcon));
-        } else {
-            console.log('PromptGuard: No body found, cannot append icon');
+        document.body.appendChild(this.floatingIcon);
+    }
+
+    createMiniPopup() {
+        // Remove existing popup if present
+        const existing = document.querySelector('.promptguard-mini-popup');
+        if (existing) {
+            existing.remove();
+        }
+
+        // Create mini popup
+        this.miniPopup = document.createElement('div');
+        this.miniPopup.className = 'promptguard-mini-popup';
+        this.miniPopup.innerHTML = `
+            <div class="pg-popup-header" id="pgHeader">
+                <div class="pg-popup-title">
+                    <span>🛡️</span>
+                    <span>PromptGuard</span>
+                </div>
+                <div class="pg-popup-controls">
+                    <button class="pg-control-btn" id="pgMinimize" title="Minimize">−</button>
+                    <button class="pg-control-btn" id="pgMaximize" title="Maximize">□</button>
+                    <button class="pg-control-btn" id="pgClose" title="Close">×</button>
+                </div>
+            </div>
+            <div class="pg-popup-body" id="pgBody">
+                <div class="pg-status-section">
+                    <div class="pg-status-dot active" id="pgStatusDot"></div>
+                    <span class="pg-status-text" id="pgStatusText">Protected</span>
+                </div>
+                
+                <div class="pg-score-section">
+                    <div class="pg-score-circle" id="pgScore">92</div>
+                    <div class="pg-score-label">Privacy Score</div>
+                </div>
+                
+                <div class="pg-quick-actions">
+                    <button class="pg-action-btn" id="pgScanBtn">
+                        <div class="pg-action-icon">🔍</div>
+                        <div class="pg-action-text">
+                            <div class="pg-action-title">Scan Page</div>
+                            <div class="pg-action-subtitle">Check for personal info</div>
+                        </div>
+                    </button>
+                    
+                    <button class="pg-action-btn" id="pgOptimizeBtn">
+                        <div class="pg-action-icon">✨</div>
+                        <div class="pg-action-text">
+                            <div class="pg-action-title">Optimize Prompt</div>
+                            <div class="pg-action-subtitle">Remove sensitive data</div>
+                        </div>
+                    </button>
+                    
+                    <button class="pg-action-btn" id="pgAlertsBtn">
+                        <div class="pg-action-icon">⚠️</div>
+                        <div class="pg-action-text">
+                            <div class="pg-action-title">View Alerts</div>
+                            <div class="pg-action-subtitle">Recent warnings</div>
+                        </div>
+                        <div class="pg-alerts-badge" id="pgAlertsBadge">3</div>
+                    </button>
+                </div>
+            </div>
+            <div class="pg-popup-footer">
+                Last scan: just now
+            </div>
+            <div class="pg-resize-handle" id="pgResize"></div>
+        `;
+
+        document.body.appendChild(this.miniPopup);
+        this.setupPopupControls();
+        this.makePopupDraggable();
+    }
+
+    setupPopupControls() {
+        // Close button
+        document.getElementById('pgClose').addEventListener('click', () => {
+            this.miniPopup.classList.remove('show');
+        });
+
+        // Minimize button
+        document.getElementById('pgMinimize').addEventListener('click', () => {
+            this.miniPopup.classList.toggle('minimized');
+        });
+
+        // Maximize button
+        document.getElementById('pgMaximize').addEventListener('click', () => {
+            this.miniPopup.classList.toggle('maximized');
+        });
+
+        // Action buttons
+        document.getElementById('pgScanBtn').addEventListener('click', () => {
+            this.performQuickScan();
+        });
+
+        document.getElementById('pgOptimizeBtn').addEventListener('click', () => {
+            this.optimizeCurrentPrompt();
+        });
+
+        document.getElementById('pgAlertsBtn').addEventListener('click', () => {
+            // Open alerts page in new tab
+            chrome.runtime.sendMessage({action: 'openAlertsPage'});
+        });
+    }
+
+    makePopupDraggable() {
+        const header = document.getElementById('pgHeader');
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+
+        header.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.pg-control-btn')) return;
+            
+            isDragging = true;
+            this.miniPopup.classList.add('dragging');
+            
+            initialX = e.clientX - this.miniPopup.offsetLeft;
+            initialY = e.clientY - this.miniPopup.offsetTop;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            e.preventDefault();
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+            
+            this.miniPopup.style.left = currentX + 'px';
+            this.miniPopup.style.top = currentY + 'px';
+            this.miniPopup.style.right = 'auto';
+            this.miniPopup.style.bottom = 'auto';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                this.miniPopup.classList.remove('dragging');
+            }
+        });
+    }
+
+    toggleMiniPopup() {
+        this.miniPopup.classList.toggle('show');
+        
+        if (this.miniPopup.classList.contains('show')) {
+            this.updatePopupStatus();
         }
     }
 
+    updatePopupStatus() {
+        // Update status based on current state
+        const statusDot = document.getElementById('pgStatusDot');
+        const statusText = document.getElementById('pgStatusText');
+        
+        if (!this.isActive) {
+            statusDot.className = 'pg-status-dot warning';
+            statusText.textContent = 'Disabled';
+        } else {
+            statusDot.className = 'pg-status-dot active';
+            statusText.textContent = 'Protected';
+        }
+    }
+
+    async performQuickScan() {
+        const scanBtn = document.getElementById('pgScanBtn');
+        const originalText = scanBtn.innerHTML;
+        
+        // Show loading state
+        scanBtn.innerHTML = `
+            <div class="pg-action-icon">⏳</div>
+            <div class="pg-action-text">
+                <div class="pg-action-title">Scanning...</div>
+                <div class="pg-action-subtitle">Please wait</div>
+            </div>
+        `;
+        scanBtn.disabled = true;
+        
+        // Perform scan
+        const result = await this.scanPage();
+        
+        // Show result
+        setTimeout(() => {
+            scanBtn.innerHTML = originalText;
+            scanBtn.disabled = false;
+            
+            if (result.foundIssues) {
+                this.showPopupNotification(`⚠️ Found ${result.issueCount} issue(s)`, 'warning');
+            } else {
+                this.showPopupNotification('✅ No issues found', 'success');
+            }
+        }, 1500);
+    }
+
+    showPopupNotification(message, type = 'info') {
+        const body = document.getElementById('pgBody');
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            background: ${type === 'warning' ? '#fff3cd' : '#d4edda'};
+            border: 1px solid ${type === 'warning' ? '#ffc107' : '#28a745'};
+            color: ${type === 'warning' ? '#856404' : '#155724'};
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 12px;
+            animation: slideIn 0.3s ease;
+        `;
+        notification.textContent = message;
+        
+        body.insertBefore(notification, body.firstChild);
+        
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
     openPopup() {
-        // Open the extension popup (this will be handled by the browser)
-        chrome.runtime.sendMessage({action: 'openPopup'});
+        // This now toggles the mini popup instead
+        this.toggleMiniPopup();
     }
 
     setupMessageListener() {
@@ -335,12 +538,140 @@ class PromptGuardContent {
 
         input.addEventListener('input', checkInput);
         input.addEventListener('paste', () => setTimeout(checkInput, 100));
+        
+        // Also check on focus for pre-existing content
+        input.addEventListener('focus', () => setTimeout(checkInput, 100));
+    }
+
+    // Performance monitoring
+    measurePerformance(operation, fn) {
+        const start = performance.now();
+        const result = fn();
+        const end = performance.now();
+        console.log(`PromptGuard ${operation}: ${(end - start).toFixed(2)}ms`);
+        return result;
+    }
+
+    // Error handling and reporting
+    handleError(error, context) {
+        console.error(`PromptGuard error in ${context}:`, error);
+        
+        // Send error to background script for logging
+        chrome.runtime.sendMessage({
+            action: 'logError',
+            error: {
+                message: error.message,
+                stack: error.stack,
+                context: context,
+                url: window.location.href,
+                timestamp: Date.now()
+            }
+        }).catch(() => {
+            // Silently fail if background script is unavailable
+        });
+    }
+
+    // Advanced detection patterns for different contexts
+    getContextualPatterns() {
+        const basePatterns = this.detectionPatterns;
+        
+        // Add context-specific patterns based on current site
+        if (window.location.hostname.includes('openai.com')) {
+            return {
+                ...basePatterns,
+                apiKey: /sk-[A-Za-z0-9]{48}/g, // OpenAI API keys
+            };
+        } else if (window.location.hostname.includes('anthropic.com')) {
+            return {
+                ...basePatterns,
+                apiKey: /ant-[A-Za-z0-9-]{95}/g, // Anthropic API keys
+            };
+        }
+        
+        return basePatterns;
+    }
+
+    // Enhanced detection with context awareness
+    detectPersonalInfoAdvanced(text) {
+        const patterns = this.getContextualPatterns();
+        const detected = [];
+
+        Object.entries(patterns).forEach(([type, pattern]) => {
+            const matches = text.match(pattern);
+            if (matches) {
+                detected.push({
+                    type,
+                    matches: matches.length,
+                    examples: matches.slice(0, 2),
+                    severity: this.getSeverityForType(type),
+                    suggestions: this.getSuggestionsForType(type)
+                });
+            }
+        });
+
+        return detected;
+    }
+
+    getSeverityForType(type) {
+        const severityMap = {
+            email: 'medium',
+            phone: 'medium',
+            address: 'high',
+            ssn: 'high',
+            creditCard: 'high',
+            apiKey: 'high'
+        };
+        return severityMap[type] || 'medium';
+    }
+
+    getSuggestionsForType(type) {
+        const suggestions = {
+            email: 'Use a placeholder like [EMAIL] or example@domain.com',
+            phone: 'Replace with [PHONE] or use (555) XXX-XXXX format',
+            address: 'Use [ADDRESS] or a generic location like "123 Main St"',
+            ssn: 'Never include SSN in prompts. Use [SSN] if needed',
+            creditCard: 'Never include credit card numbers. Use [CARD] placeholder',
+            apiKey: 'Remove API keys immediately. Use [API_KEY] placeholder'
+        };
+        return suggestions[type] || 'Consider using a placeholder instead';
+    }
+
+    // Accessibility improvements
+    addAccessibilitySupport() {
+        // Add ARIA labels to floating icon
+        if (this.floatingIcon) {
+            this.floatingIcon.setAttribute('role', 'button');
+            this.floatingIcon.setAttribute('aria-label', 'PromptGuard privacy protection');
+            this.floatingIcon.setAttribute('tabindex', '0');
+            
+            // Keyboard support for floating icon
+            this.floatingIcon.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    this.openPopup();
+                }
+            });
+        }
     }
 
     // Clean up on page unload
     cleanup() {
-        if (this.floatingIcon) {
-            this.floatingIcon.remove();
+        try {
+            if (this.floatingIcon) {
+                this.floatingIcon.remove();
+            }
+            
+            // Remove event listeners
+            document.querySelectorAll('[data-promptguard-listener]').forEach(element => {
+                element.removeAttribute('data-promptguard-listener');
+            });
+            
+            // Clear any remaining tooltips
+            document.querySelectorAll('.promptguard-tooltip').forEach(tooltip => {
+                tooltip.remove();
+            });
+        } catch (error) {
+            this.handleError(error, 'cleanup');
         }
     }
 }
@@ -356,23 +687,30 @@ if (document.readyState === 'loading') {
 }
 
 function initPromptGuard() {
-    // Only initialize on AI chat sites
-    const supportedSites = [
-        'chat.openai.com',
-        'claude.ai',
-        'bard.google.com',
-        'bing.com'
-    ];
+    try {
+        // Only initialize on AI chat sites
+        const supportedSites = [
+            'chat.openai.com',
+            'claude.ai',
+            'bard.google.com',
+            'bing.com'
+        ];
 
-    if (supportedSites.some(site => window.location.hostname.includes(site))) {
-        promptGuard = new PromptGuardContent();
-        
-        // Clean up on page unload
-        window.addEventListener('beforeunload', () => {
-            if (promptGuard) {
-                promptGuard.cleanup();
-            }
-        });
+        if (supportedSites.some(site => window.location.hostname.includes(site))) {
+            promptGuard = new PromptGuardContent();
+            
+            // Add accessibility support
+            promptGuard.addAccessibilitySupport();
+            
+            // Clean up on page unload
+            window.addEventListener('beforeunload', () => {
+                if (promptGuard) {
+                    promptGuard.cleanup();
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Failed to initialize PromptGuard content script:', error);
     }
 }
 
@@ -383,12 +721,40 @@ new MutationObserver(() => {
     if (url !== lastUrl) {
         lastUrl = url;
         
-        // Re-initialize on navigation
+        // Re-initialize on navigation after delay
         setTimeout(() => {
-            if (promptGuard) {
-                promptGuard.cleanup();
+            try {
+                if (promptGuard) {
+                    promptGuard.cleanup();
+                }
+                initPromptGuard();
+            } catch (error) {
+                console.error('Failed to re-initialize PromptGuard:', error);
             }
-            initPromptGuard();
         }, 1000);
     }
 }).observe(document, {subtree: true, childList: true});
+
+// Global error handler for content script
+window.addEventListener('error', (event) => {
+    if (promptGuard) {
+        promptGuard.handleError(event.error, 'global');
+    }
+});
+
+// Handle extension context invalidation
+chrome.runtime.onConnect.addListener((port) => {
+    port.onDisconnect.addListener(() => {
+        if (chrome.runtime.lastError) {
+            console.log('Content script disconnected:', chrome.runtime.lastError.message);
+            // Attempt to reinitialize if needed
+            setTimeout(() => {
+                try {
+                    initPromptGuard();
+                } catch (error) {
+                    console.error('Failed to reinitialize after disconnect:', error);
+                }
+            }, 2000);
+        }
+    });
+});
