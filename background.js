@@ -7,6 +7,7 @@ class PromptGuardBackground {
         this.alertsCount = 0;
         this.privacyScore = 92;
         this.isActive = true;
+        this.alerts = [];
         this.setupEventListeners();
         this.initialize();
     }
@@ -59,6 +60,7 @@ class PromptGuardBackground {
             isActive: true,
             privacyScore: 92,
             alertsCount: 0,
+            alerts: [],
             detectionSensitivity: 'medium',
             autoOptimize: false,
             notifications: true
@@ -73,6 +75,7 @@ class PromptGuardBackground {
             'isActive',
             'privacyScore',
             'alertsCount',
+            'alerts',
             'detectionSensitivity',
             'autoOptimize',
             'notifications'
@@ -81,6 +84,7 @@ class PromptGuardBackground {
         this.isActive = settings.isActive !== undefined ? settings.isActive : true;
         this.privacyScore = settings.privacyScore || 92;
         this.alertsCount = settings.alertsCount || 0;
+        this.alerts = settings.alerts || [];
 
         this.updateBadge();
     }
@@ -128,7 +132,16 @@ class PromptGuardBackground {
 
     async handleAlert(message, sender) {
         this.alertsCount++;
-        
+
+        // Add alert to array
+        const issueTypes = message.issues?.map(issue => issue.type).join(', ') || 'unknown';
+        const alert = {
+            message: `Personal information detected: ${issueTypes}`,
+            timestamp: Date.now(),
+            url: sender.tab?.url
+        };
+        this.alerts.push(alert);
+
         // Decrease privacy score based on severity
         const severityImpact = message.issues ? message.issues.length * 2 : 1;
         this.privacyScore = Math.max(this.privacyScore - severityImpact, 0);
@@ -136,6 +149,7 @@ class PromptGuardBackground {
         // Save updated stats
         await chrome.storage.sync.set({
             alertsCount: this.alertsCount,
+            alerts: this.alerts,
             privacyScore: this.privacyScore
         });
 
@@ -268,10 +282,12 @@ class PromptGuardBackground {
 
     async clearAlerts() {
         this.alertsCount = 0;
+        this.alerts = [];
         this.privacyScore = Math.min(this.privacyScore + 10, 100); // Slight score improvement
-        
+
         await chrome.storage.sync.set({
             alertsCount: 0,
+            alerts: [],
             privacyScore: this.privacyScore
         });
 
@@ -290,6 +306,11 @@ class PromptGuardBackground {
             success: true,
             data: exportData
         };
+    }
+
+    logError(error) {
+        console.error('PromptGuard Error:', error);
+        // In a production app, you might send this to an error reporting service
     }
 
     // Periodic cleanup and maintenance

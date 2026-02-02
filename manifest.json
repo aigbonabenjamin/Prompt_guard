@@ -15,10 +15,10 @@
   ],
   
   "host_permissions": [
-    "https://chat.openai.com/*",
-    "https://claude.ai/*",
-    "https://bard.google.com/*",
-    "https://www.bing.com/chat*"
+    "https://*.openai.com/*",
+    "https://*.claude.ai/*",
+    "https://*.google.com/*",
+    "https://*.bing.com/chat*"
   ],
   
   "action": {
@@ -35,7 +35,12 @@
   "web_accessible_resources": [
     {
       "resources": ["popup.html"],
-      "matches": ["<all_urls>"]
+      "matches": [
+        "https://*.openai.com/*",
+        "https://*.claude.ai/*",
+        "https://*.google.com/*",
+        "https://*.bing.com/*"
+      ]
     }
   ]
 }

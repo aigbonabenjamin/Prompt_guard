@@ -3,9 +3,11 @@ let isActive = true;
 let privacyScore = 92;
 let alertsCount = 3;
 let lastScanTime = new Date();
+let darkMode = false;
 
 // DOM elements
 const mainToggle = document.getElementById('mainToggle');
+const darkModeToggle = document.getElementById('darkModeToggle');
 const statusDot = document.getElementById('statusDot');
 const statusText = document.getElementById('statusText');
 const scoreCircle = document.getElementById('scoreCircle');
@@ -21,7 +23,10 @@ const notification = document.getElementById('notification');
 function updateUI() {
     // Update toggle state
     mainToggle.classList.toggle('active', isActive);
-    
+
+    // Update dark mode
+    document.body.classList.toggle('dark-mode', darkMode);
+
     // Update status
     statusDot.className = 'status-dot';
     if (!isActive) {
@@ -105,60 +110,40 @@ function saveState() {
         isActive,
         privacyScore,
         alertsCount,
-        lastScanTime: lastScanTime.getTime()
+        lastScanTime: lastScanTime.getTime(),
+        darkMode
     };
     chrome.storage.sync.set(state);
 }
 
 // Load state from chrome storage
 function loadState() {
-    chrome.storage.sync.get(['isActive', 'privacyScore', 'alertsCount', 'lastScanTime'], (result) => {
+    chrome.storage.sync.get(['isActive', 'privacyScore', 'alertsCount', 'lastScanTime', 'darkMode'], (result) => {
         if (result.isActive !== undefined) isActive = result.isActive;
         if (result.privacyScore !== undefined) privacyScore = result.privacyScore;
         if (result.alertsCount !== undefined) alertsCount = result.alertsCount;
         if (result.lastScanTime) lastScanTime = new Date(result.lastScanTime);
-        
+        if (result.darkMode !== undefined) darkMode = result.darkMode;
+
         updateUI();
         updateFooter();
     });
 }
 
-// Event listeners
-mainToggle.addEventListener('click', (e) => {
-    e.stopPropagation();
-    isActive = !isActive;
-    updateUI();
-    showNotification(isActive ? '🛡️ PromptGuard activated' : '⚠️ PromptGuard disabled');
-    
-    // Send message to content script
-    chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-        chrome.tabs.sendMessage(tabs[0].id, {
-            action: 'toggleProtection',
-            isActive: isActive
-        });
-    });
-});
-
+// Event listeners for action buttons
 scanBtn.addEventListener('click', () => {
-    if (!isActive) {
-        showNotification('Please enable PromptGuard first');
-        return;
-    }
     performScan();
 });
 
 optimizeBtn.addEventListener('click', () => {
-    if (!isActive) {
-        showNotification('Please enable PromptGuard first');
-        return;
-    }
-    
+    showNotification('✨ Optimizing prompt...');
+    // Send message to content script to optimize
     chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
         chrome.tabs.sendMessage(tabs[0].id, {action: 'optimizePrompt'}, (response) => {
             if (response && response.success) {
-                showNotification('✨ Prompt optimized successfully!');
+                showNotification('✅ Prompt optimized successfully!');
             } else {
-                showNotification('✨ Prompt optimization coming soon!');
+                showNotification('⚠️ No optimization needed or failed');
             }
         });
     });
@@ -166,8 +151,7 @@ optimizeBtn.addEventListener('click', () => {
 
 alertsBtn.addEventListener('click', () => {
     if (alertsCount > 0) {
-        // In a real implementation, this would open a detailed alerts view
-        showNotification(`📊 You have ${alertsCount} privacy alerts`);
+        // Open alerts page in a new tab for better accessibility
         chrome.tabs.create({url: chrome.runtime.getURL('alerts.html')});
     } else {
         showNotification('🎉 No alerts to show!');
@@ -177,6 +161,41 @@ alertsBtn.addEventListener('click', () => {
 settingsBtn.addEventListener('click', () => {
     chrome.tabs.create({url: chrome.runtime.getURL('settings.html')});
 });
+
+mainToggle.addEventListener('click', () => {
+    isActive = !isActive;
+    updateUI();
+    showNotification(isActive ? '🛡️ Protection enabled' : '🚫 Protection disabled');
+    // Send message to background to update active state
+    chrome.runtime.sendMessage({action: 'updateSettings', settings: {isActive}});
+ });
+
+darkModeToggle.addEventListener('click', () => {
+    darkMode = !darkMode;
+    updateUI();
+    showNotification(darkMode ? '🌙 Dark mode enabled' : '☀️ Light mode enabled');
+});
+
+
+// New feature: Expand popup to full browser page for easier accessibility
+const expandBtn = document.createElement('button');
+expandBtn.textContent = 'Open Full Page';
+expandBtn.className = 'action-btn';
+expandBtn.style.marginTop = '10px';
+expandBtn.style.width = '100%';
+expandBtn.style.padding = '12px';
+expandBtn.style.fontWeight = '600';
+expandBtn.style.fontSize = '14px';
+expandBtn.style.cursor = 'pointer';
+
+expandBtn.addEventListener('click', () => {
+    chrome.tabs.create({url: chrome.runtime.getURL('fullpage.html')});
+});
+
+const quickActionsContainer = document.querySelector('.quick-actions');
+if (quickActionsContainer) {
+    quickActionsContainer.appendChild(expandBtn);
+}
 
 // Initialize the popup
 document.addEventListener('DOMContentLoaded', () => {

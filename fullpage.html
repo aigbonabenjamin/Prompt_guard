@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PromptGuard Full Page</title>
+    <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <span class="shield-icon">🛡️</span>
+            PromptGuard - Full Page View
+        </div>
+    </div>
+
+    <div class="status-indicator">
+        <div class="status-dot active" id="statusDot"></div>
+        <span class="status-text" id="statusText">Protected</span>
+    </div>
+
+    <div class="privacy-score">
+        <div class="score-circle" id="scoreCircle">92</div>
+        <div class="score-label">Privacy Score</div>
+    </div>
+
+    <div class="quick-actions" id="fullPageActions">
+        <!-- Buttons will be dynamically added here -->
+    </div>
+
+    <div class="footer">
+        <div class="footer-text">Last scan: 2 minutes ago</div>
+    </div>
+
+    <div class="loading" id="loadingScreen">
+        <div class="spinner"></div>
+        <div>Scanning for personal information...</div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

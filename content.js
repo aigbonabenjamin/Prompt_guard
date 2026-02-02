@@ -13,32 +13,74 @@ class PromptGuardContent {
         this.init();
     }
 
-    init() {
-        this.createFloatingIcon();
-        this.createMiniPopup();
-        this.setupMessageListener();
-        this.startMonitoring();
+    async init() {
+        console.log('PromptGuard: Starting initialization on', window.location.href);
+
+        try {
+            // Wait for CSS to be injected
+            await this.waitForCSS();
+
+            // Create UI elements with error handling
+            this.createFloatingIcon();
+            this.createMiniPopup();
+
+            // Verify icon was created
+            if (!this.floatingIcon || !document.body.contains(this.floatingIcon)) {
+                console.error('PromptGuard: Floating icon creation failed, retrying...');
+                setTimeout(() => this.retryCreateIcon(), 1000);
+            } else {
+                console.log('PromptGuard: Floating icon created successfully');
+            }
+
+            this.setupMessageListener();
+            this.startMonitoring();
+
+            console.log('PromptGuard: Initialization completed successfully');
+        } catch (error) {
+            console.error('PromptGuard: Initialization failed:', error);
+            this.handleError(error, 'init');
+        }
     }
 
     createFloatingIcon() {
-        // Remove existing icon if present
-        const existing = document.querySelector('.promptguard-floating-icon');
-        if (existing) {
-            existing.remove();
+        try {
+            console.log('PromptGuard: Creating floating icon...');
+
+            // Check if document.body is available
+            if (!document.body) {
+                console.error('PromptGuard: document.body not available, cannot create icon');
+                return;
+            }
+
+            // Remove existing icon if present
+            const existing = document.querySelector('.promptguard-floating-icon');
+            if (existing) {
+                existing.remove();
+            }
+
+            // Create floating icon
+            this.floatingIcon = document.createElement('div');
+            this.floatingIcon.className = 'promptguard-floating-icon';
+            this.floatingIcon.innerHTML = '<div class="icon">🛡️</div>';
+            this.floatingIcon.title = 'PromptGuard - Click to open';
+
+            // Add click event with error handling
+            this.floatingIcon.addEventListener('click', () => {
+                try {
+                    this.toggleMiniPopup();
+                } catch (error) {
+                    console.error('PromptGuard: Error toggling popup:', error);
+                }
+            });
+
+            // Append to body
+            document.body.appendChild(this.floatingIcon);
+
+            console.log('PromptGuard: Floating icon created and appended to DOM');
+        } catch (error) {
+            console.error('PromptGuard: Error creating floating icon:', error);
+            this.handleError(error, 'createFloatingIcon');
         }
-
-        // Create floating icon
-        this.floatingIcon = document.createElement('div');
-        this.floatingIcon.className = 'promptguard-floating-icon';
-        this.floatingIcon.innerHTML = '<div class="icon">🛡️</div>';
-        this.floatingIcon.title = 'PromptGuard - Click to open';
-
-        // Add click event
-        this.floatingIcon.addEventListener('click', () => {
-            this.toggleMiniPopup();
-        });
-
-        document.body.appendChild(this.floatingIcon);
     }
 
     createMiniPopup() {
@@ -660,18 +702,65 @@ class PromptGuardContent {
             if (this.floatingIcon) {
                 this.floatingIcon.remove();
             }
-            
+
             // Remove event listeners
             document.querySelectorAll('[data-promptguard-listener]').forEach(element => {
                 element.removeAttribute('data-promptguard-listener');
             });
-            
+
             // Clear any remaining tooltips
             document.querySelectorAll('.promptguard-tooltip').forEach(tooltip => {
                 tooltip.remove();
             });
         } catch (error) {
             this.handleError(error, 'cleanup');
+        }
+    }
+
+    // Wait for CSS to be injected before creating UI elements
+    async waitForCSS() {
+        return new Promise((resolve) => {
+            const checkCSS = () => {
+                // Check if our CSS styles are available
+                const testElement = document.createElement('div');
+                testElement.className = 'promptguard-floating-icon';
+                document.body.appendChild(testElement);
+
+                const computedStyle = window.getComputedStyle(testElement);
+                const hasStyles = computedStyle.position === 'fixed' || computedStyle.zIndex === '9999';
+
+                document.body.removeChild(testElement);
+
+                if (hasStyles) {
+                    console.log('PromptGuard: CSS loaded successfully');
+                    resolve();
+                } else {
+                    console.log('PromptGuard: Waiting for CSS...');
+                    setTimeout(checkCSS, 100);
+                }
+            };
+
+            // Give CSS injection a moment to complete
+            setTimeout(checkCSS, 50);
+        });
+    }
+
+    // Retry creating the floating icon if initial creation failed
+    retryCreateIcon() {
+        console.log('PromptGuard: Retrying icon creation...');
+
+        try {
+            this.createFloatingIcon();
+
+            if (this.floatingIcon && document.body.contains(this.floatingIcon)) {
+                console.log('PromptGuard: Icon created successfully on retry');
+            } else {
+                console.error('PromptGuard: Icon creation failed again, will try once more...');
+                setTimeout(() => this.createFloatingIcon(), 2000);
+            }
+        } catch (error) {
+            console.error('PromptGuard: Error during icon retry:', error);
+            this.handleError(error, 'retryCreateIcon');
         }
     }
 }
@@ -688,26 +777,65 @@ if (document.readyState === 'loading') {
 
 function initPromptGuard() {
     try {
-        // Only initialize on AI chat sites
+        // Enhanced site detection with more patterns
         const supportedSites = [
             'chat.openai.com',
             'claude.ai',
             'bard.google.com',
-            'bing.com'
+            'bing.com',
+            'chatgpt.com',
+            'gemini.google.com',
+            'copilot.microsoft.com',
+            'perplexity.ai',
+            'anthropic.com'
         ];
 
-        if (supportedSites.some(site => window.location.hostname.includes(site))) {
+        const currentHostname = window.location.hostname.toLowerCase();
+        const currentUrl = window.location.href.toLowerCase();
+
+        // Check hostname matches
+        const hostnameMatch = supportedSites.some(site => currentHostname.includes(site));
+
+        // Additional URL pattern checks for specific cases
+        const urlPatterns = [
+            /chat\.openai\.com/,
+            /claude\.ai/,
+            /bard\.google\.com/,
+            /bing\.com.*chat/i,
+            /chatgpt\.com/,
+            /gemini\.google\.com/,
+            /copilot\.microsoft\.com/,
+            /perplexity\.ai/,
+            /anthropic\.com.*claude/i
+        ];
+
+        const urlMatch = urlPatterns.some(pattern => pattern.test(currentUrl));
+
+        const isSupported = hostnameMatch || urlMatch;
+
+        console.log('PromptGuard: Checking site support:', {
+            hostname: currentHostname,
+            url: currentUrl,
+            hostnameMatch,
+            urlMatch,
+            isSupported
+        });
+
+        if (isSupported) {
+            console.log('PromptGuard: Site supported, initializing...');
             promptGuard = new PromptGuardContent();
-            
+
             // Add accessibility support
             promptGuard.addAccessibilitySupport();
-            
+
             // Clean up on page unload
             window.addEventListener('beforeunload', () => {
                 if (promptGuard) {
                     promptGuard.cleanup();
                 }
             });
+        } else {
+            console.log('PromptGuard: Site not supported, skipping initialization');
         }
     } catch (error) {
         console.error('Failed to initialize PromptGuard content script:', error);

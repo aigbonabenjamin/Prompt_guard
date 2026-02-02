@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PromptGuard Alerts</title>
+    <link rel="stylesheet" href="alerts.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <span class="shield-icon">🛡️</span>
+                PromptGuard Alerts
+            </div>
+            <button class="back-btn" id="backBtn">← Back</button>
+        </header>
+
+        <main class="main-content">
+            <h1>Privacy Alerts</h1>
+            <p class="subtitle">Recent warnings and detected issues</p>
+
+            <div class="alerts-list" id="alertsList">
+                <!-- Alerts will be populated here -->
+            </div>
+
+            <div class="no-alerts" id="noAlerts">
+                <div class="no-alerts-icon">✅</div>
+                <h2>No Alerts</h2>
+                <p>Your privacy is protected. No issues detected recently.</p>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <button class="clear-btn" id="clearBtn">Clear All Alerts</button>
+        </footer>
+    </div>
+
+    <script src="alerts.js"></script>
+</body>
+</html>
