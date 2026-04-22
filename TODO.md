@@ -1,12 +1,1 @@
-# Dark Mode Toggle Implementation for PromptGuard Popup
-
-## Tasks
-- [x] Edit popup.html: Add a dark mode toggle button in the toggle-container at top right, next to the existing main toggle.
-- [x] Edit popup.css: Add CSS variables for colors, define dark mode styles using a 'dark-mode' class on body, ensure smooth transitions.
-- [x] Edit popup.js: Add darkMode state variable, toggle handler, save/load dark mode state to chrome.storage.sync, apply dark-mode class to body.
-- [x] Fix dark mode toggle visibility: Adjust CSS to ensure the toggle button is clearly visible.
-- [x] Create alerts.html: New HTML file for displaying alerts.
-- [x] Create alerts.css: Styles for the alerts page.
-- [x] Create alerts.js: JavaScript for managing alerts display.
-- [x] Test the popup: Open the extension popup to verify dark mode toggle works, styling is professional, and no existing features are broken.
-- [x] Test view alerts: Verify that clicking "View Alerts" opens the alerts page correctly.
+# PromptGuard Chrome Compatibility & Universal Sanitization Plan\n## Status: 🚀 In Progress (4/12 complete ✅)\n\n## Phase 1: Perfect Chrome MV3 Compatibility ✓\n- [x] 1. `manifest.json` → Universal content_scripts\n- [x] 2. `background.js` → Pure service worker\n- [x] 3. `content.js` → Universal selectors + no site check\n- [x] 4. `content.css` → z-index max 2147483647\n\n## Phase 2: Bulletproof Auto-Sanitization (4 steps)\n- [ ] 5. Enhance `content.js` pipeline → Multi-pass + settings integration\n- [ ] 6. `settings.*` → NER sensitivity slider + per-type toggles\n- [ ] 7. `popup.js` → Real-time sanitization stats\n- [ ] 8. `alerts.js` → Log sanitized events\n\n## Phase 3: Universal Testing & Demo (4 steps)\n- [ ] 9. Test universal injection (Gmail/Notepad/etc)\n- [ ] 10. Performance validation (throttled scanning)\n- [ ] 11. MV3 compliance (no console errors)\n- [ ] 12. Final demo + attempt_completion\n\n**Next Step:** Enhance `content.js` pipeline (Step 5)\n**⚠️ MANUAL:** Reload extension `chrome://extensions/ → PromptGuard → Reload`\n\n**Test Command:** Open Gmail compose → Type `john@example.com` → Watch auto-sanitization!

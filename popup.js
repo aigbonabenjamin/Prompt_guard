@@ -135,6 +135,25 @@ scanBtn.addEventListener('click', () => {
     performScan();
 });
 
+// Auto-sanitize toggle
+const autoSanitizeToggle = document.getElementById('autoSanitizeToggle');
+if (autoSanitizeToggle) {
+    autoSanitizeToggle.addEventListener('click', () => {
+        const autoSanitize = autoSanitizeToggle.classList.toggle('active');
+        chrome.runtime.sendMessage({action: 'updateSettings', settings: {auto_sanitize: autoSanitize}});
+        showNotification(autoSanitize ? '✅ Auto-sanitization enabled' : '❌ Auto-sanitization disabled');
+    });
+}
+
+// NER sensitivity selector
+const nerSensitivitySelect = document.getElementById('nerSensitivity');
+if (nerSensitivitySelect) {
+    nerSensitivitySelect.addEventListener('change', () => {
+        chrome.runtime.sendMessage({action: 'updateSettings', settings: {ner_sensitivity: nerSensitivitySelect.value}});
+        showNotification('🔍 NER sensitivity updated');
+    });
+}
+
 optimizeBtn.addEventListener('click', () => {
     showNotification('✨ Optimizing prompt...');
     // Send message to content script to optimize
@@ -202,26 +221,3 @@ document.addEventListener('DOMContentLoaded', () => {
     loadState();
     
     // Update footer time every minute
-    setInterval(updateFooter, 60000);
-    
-    // Check if we're on a supported AI site
-    chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-        const supportedSites = [
-            'chat.openai.com',
-            'claude.ai',
-            'bard.google.com',
-            'bing.com/chat'
-        ];
-        
-        const currentUrl = tabs[0].url;
-        const isSupported = supportedSites.some(site => currentUrl.includes(site));
-        
-        if (!isSupported) {
-            scanBtn.disabled = true;
-            optimizeBtn.disabled = true;
-            scanBtn.style.opacity = '0.5';
-            optimizeBtn.style.opacity = '0.5';
-            showNotification('Navigate to an AI chat site to use PromptGuard');
-        }
-    });
-});

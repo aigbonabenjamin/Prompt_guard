@@ -1,0 +1,187 @@
+console.log('PromptGuard Background Service Worker - Universal Mode');
+
+// Simplified MV3 Service Worker for PromptGuard (Injection via manifest.json)
+class PromptGuardBackground {
+    constructor() {
+        this.alertsCount = 0;
+        this.privacyScore = 92;
+        this.isActive = true;
+        this.alerts = [];
+        this.setupEventListeners();
+        this.loadSettings();
+    }
+
+    setupEventListeners() {
+        // Extension installation
+        chrome.runtime.onInstalled.addListener(() => {
+            this.initializeExtension();
+        });
+
+        // Messages from content scripts/popups
+        chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+            this.handleMessage(message, sender, sendResponse);
+            return true;
+        });
+
+        // Browser action click
+        chrome.action.onClicked.addListener((tab) => {
+            this.openPopup();
+        });
+
+        // Notification clicks
+        chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
+            if (buttonIndex === 0) {
+                chrome.tabs.create({url: chrome.runtime.getURL('alerts.html')});
+            } else {
+                chrome.notifications.clear(notificationId);
+            }
+        });
+    }
+
+    async loadSettings() {
+        const settings = await chrome.storage.sync.get([
+            'isActive', 'privacyScore', 'alertsCount', 'alerts',
+            'detectionSensitivity', 'auto_sanitize', 'ner_sensitivity'
+        ]);
+        this.isActive = settings.isActive ?? true;
+        this.privacyScore = settings.privacyScore ?? 92;
+        this.alertsCount = settings.alertsCount ?? 0;
+        this.alerts = settings.alerts ?? [];
+        this.updateBadge();
+    }
+
+    handleMessage(message, sender, sendResponse) {
+        switch (message.action) {
+            case 'alertDetected':
+                this.handleAlert(message);
+                sendResponse({success: true});
+                break;
+            case 'getSettings':
+                this.getSettings().then(sendResponse);
+                break;
+            case 'updateSettings':
+                this.updateSettings(message.settings);
+                sendResponse({success: true});
+                break;
+            case 'clearAlerts':
+                this.clearAlerts();
+                sendResponse({success: true});
+                break;
+            case 'openPopup':
+            case 'openAlertsPage':
+                this.openPopup();
+                sendResponse({success: true});
+                break;
+            default:
+                sendResponse({success: false});
+        }
+    }
+
+    async handleAlert(message) {
+        this.alertsCount++;
+        const issueTypes = message.issues?.map(i => i.type).join(', ') || 'unknown';
+        this.alerts.push({
+            message: `Detected: ${issueTypes}`,
+            timestamp: Date.now(),
+            count: message.entityCount || 1
+        });
+
+        this.privacyScore = Math.max(this.privacyScore - (message.entityCount || 1) * 2, 0);
+
+        await chrome.storage.sync.set({
+            alertsCount: this.alertsCount,
+            alerts: this.alerts.slice(-50), // Keep last 50
+            privacyScore: this.privacyScore
+        });
+
+        this.updateBadge();
+
+        // Notify if enabled
+        const settings = await chrome.storage.sync.get(['notifications']);
+        if (settings.notifications !== false) {
+            this.showNotification(issueTypes);
+        }
+    }
+
+    updateBadge() {
+        const text = this.alertsCount > 99 ? '99+' : this.alertsCount.toString();
+        chrome.action.setBadgeText({text: text || ''});
+        chrome.action.setBadgeBackgroundColor({
+            color: this.alertsCount > 0 ? '#dc3545' : '#28a745'
+        });
+    }
+
+    showNotification(issueTypes) {
+        chrome.notifications.create({
+            type: 'basic',
+            iconUrl: '/icon48.png',
+            title: '🛡️ PromptGuard Alert',
+            message: `Personal info detected: ${issueTypes}`,
+            buttons: [{title: 'View Alerts'}, {title: 'Dismiss'}]
+        });
+    }
+
+    openPopup() {
+        chrome.tabs.create({
+            url: chrome.runtime.getURL('popup.html')
+        });
+    }
+
+    async getSettings() {
+        return await chrome.storage.sync.get(null);
+    }
+
+    async updateSettings(newSettings) {
+        await chrome.storage.sync.set(newSettings);
+        if (newSettings.isActive !== undefined) this.isActive = newSettings.isActive;
+        if (newSettings.alertsCount !== undefined) this.alertsCount = newSettings.alertsCount;
+        if (newSettings.privacyScore !== undefined) this.privacyScore = newSettings.privacyScore;
+        this.updateBadge();
+
+        // Broadcast to content scripts
+        chrome.tabs.query({}, (tabs) => {
+            tabs.forEach(tab => chrome.tabs.sendMessage(tab.id, {
+                action: 'settingsUpdated',
+                settings: newSettings
+            }).catch(() => {}));
+        });
+    }
+
+    async clearAlerts() {
+        this.alertsCount = 0;
+        this.alerts = [];
+        this.privacyScore = Math.min(this.privacyScore + 10, 100);
+        await chrome.storage.sync.set({
+            alertsCount: 0,
+            alerts: [],
+            privacyScore: this.privacyScore
+        });
+        this.updateBadge();
+    }
+
+    initializeExtension() {
+        chrome.storage.sync.set({
+            isActive: true,
+            auto_sanitize: true,
+            ner_sensitivity: 'medium',
+            notifications: true,
+            alertsCount: 0,
+            privacyScore: 92
+        });
+    }
+}
+
+// Initialize
+const promptGuard = new PromptGuardBackground();
+
+// Periodic maintenance (MV3 alarm)
+chrome.alarms.create('maintenance', {periodInMinutes: 1440}); // Daily
+chrome.alarms.onAlarm.addListener(alarm => {
+    if (alarm.name === 'maintenance') {
+        console.log('Daily maintenance');
+        // Cleanup logic here
+    }
+});
+
+console.log('PromptGuard Service Worker Ready - Universal Protection Active');
+

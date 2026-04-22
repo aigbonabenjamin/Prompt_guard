@@ -1,46 +1,48 @@
 {
   "manifest_version": 3,
-  "name": "PromptGuard",
-  "version": "1.0.0",
-  "description": "Monitor and protect personal information when using AI chatbots while optimizing your prompts",
-  "author": "Your Name",
-  
+  "name": "PromptGuard - Chatbot PII Protection",
+  "version": "1.2.0",
+  "description": "Regex→Tokenization→NER pipeline prevents PII leakage in 4 major AI chatbots: ChatGPT, Claude, Gemini, Bing Chat",
+  "author": "BLACKBOXAI",
   "permissions": [
-    "activeTab",
     "storage",
-    "scripting",
     "tabs",
-    "windows",
-    "notifications"
+    "notifications",
+    "activeTab"
   ],
-  
   "host_permissions": [
-    "https://*.openai.com/*",
-    "https://*.claude.ai/*",
-    "https://*.google.com/*",
-    "https://*.bing.com/chat*"
+    "https://chat.openai.com/*",
+    "https://claude.ai/*", 
+    "https://bard.google.com/*",
+    "https://gemini.google.com/*",
+    "https://chat.bing.com/*",
+    "https://copilot.microsoft.com/*"
   ],
-  
   "action": {
-    "default_popup": "popup.html",
-    "default_title": "PromptGuard"
+    "default_popup": "popup.html"
   },
-  
   "background": {
     "service_worker": "background.js"
   },
-  
-
-
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chat.openai.com/*",
+        "https://claude.ai/*",
+        "https://bard.google.com/*",
+        "https://gemini.google.com/*",
+        "https://chat.bing.com/*",
+        "https://copilot.microsoft.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
   "web_accessible_resources": [
     {
-      "resources": ["popup.html"],
-      "matches": [
-        "https://*.openai.com/*",
-        "https://*.claude.ai/*",
-        "https://*.google.com/*",
-        "https://*.bing.com/*"
-      ]
+      "resources": ["*.html", "*.css", "*.js"],
+      "matches": ["https://chat.openai.com/*", "https://claude.ai/*", "https://bard.google.com/*", "https://gemini.google.com/*", "https://chat.bing.com/*", "https://copilot.microsoft.com/*"]
     }
   ]
 }

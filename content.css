@@ -1,22 +1,5 @@
 /* Floating icon styles for content script */
-.promptguard-floating-icon {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    z-index: 9999;
-    transition: all 0.3s ease;
-    border: 2px solid white;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
+.promptguard-floating-icon {\n    position: fixed;\n    bottom: 20px;\n    right: 20px;\n    width: 48px;\n    height: 48px;\n    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n    border-radius: 50%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    cursor: pointer;\n    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);\n    z-index: 2147483647;\n    transition: all 0.3s ease;\n    border: 2px solid white;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;\n}
 
 .promptguard-floating-icon:hover {
     transform: translateY(-2px) scale(1.05);
@@ -66,22 +49,7 @@
 }
 
 /* Floating Mini Popup */
-.promptguard-mini-popup {
-    position: fixed;
-    bottom: 80px;
-    right: 20px;
-    width: 360px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-    z-index: 10000;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    transform: scale(0.8) translateY(20px);
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    overflow: hidden;
-}
+.promptguard-mini-popup {\n    position: fixed;\n    bottom: 80px;\n    right: 20px;\n    width: 360px;\n    background: white;\n    border-radius: 12px;\n    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);\n    z-index: 2147483647;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;\n    transform: scale(0.8) translateY(20px);\n    opacity: 0;\n    visibility: hidden;\n    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);\n    overflow: hidden;\n}
 
 .promptguard-mini-popup.show {
     transform: scale(1) translateY(0);
@@ -337,20 +305,7 @@
 }
 
 /* Tooltip for detected information */
-.promptguard-tooltip {
-    position: absolute;
-    background: #dc3545;
-    color: white;
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    z-index: 10001;
-    pointer-events: none;
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: all 0.2s ease;
-}
+.promptguard-tooltip {\n    position: absolute;\n    background: #dc3545;\n    color: white;\n    padding: 8px 12px;\n    border-radius: 4px;\n    font-size: 12px;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;\n    z-index: 2147483647;\n    pointer-events: none;\n    opacity: 0;\n    transform: translateY(-10px);\n    transition: all 0.2s ease;\n}
 
 .promptguard-tooltip.show {
     opacity: 1;
